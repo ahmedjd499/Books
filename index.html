@@ -1,0 +1,774 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <meta name="theme-color" content="#1a1a1a">
+    <meta name="description" content="Offline PDF Book Reader - Read and track your books">
+    <meta name="apple-mobile-web-app-capable" content="yes">
+    <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+    <link rel="manifest" id="manifestLink" href="#">
+    <link rel="icon" type="image/svg+xml" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'%3E%3Crect fill='%234CAF50' width='100' height='100'/%3E%3Ctext y='75' font-size='75' text-anchor='middle' x='50'%3E📚%3C/text%3E%3C/svg%3E">
+    <title>Book Reader</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Oxygen, Ubuntu, Cantarell, sans-serif;
+            background: #1a1a1a;
+            color: #e0e0e0;
+            overflow-x: hidden;
+        }
+
+        .container {
+            max-width: 600px;
+            margin: 0 auto;
+            padding: 16px;
+            min-height: 100vh;
+        }
+
+        header {
+            background: #252525;
+            padding: 20px;
+            margin: -16px -16px 20px -16px;
+            box-shadow: 0 2px 8px rgba(0,0,0,0.3);
+        }
+
+        h1 {
+            font-size: 24px;
+            margin-bottom: 8px;
+        }
+
+        .subtitle {
+            color: #888;
+            font-size: 14px;
+        }
+
+        .upload-section {
+            background: #252525;
+            border: 2px dashed #444;
+            border-radius: 8px;
+            padding: 30px;
+            text-align: center;
+            margin-bottom: 30px;
+            cursor: pointer;
+            transition: all 0.3s;
+        }
+
+        .upload-section:hover {
+            border-color: #666;
+            background: #2a2a2a;
+        }
+
+        .upload-section.dragover {
+            border-color: #4CAF50;
+            background: #2a3a2a;
+        }
+
+        .upload-icon {
+            font-size: 48px;
+            margin-bottom: 16px;
+        }
+
+        #fileInput {
+            display: none;
+        }
+
+        .btn {
+            background: #4CAF50;
+            color: white;
+            border: none;
+            padding: 12px 24px;
+            border-radius: 6px;
+            font-size: 16px;
+            cursor: pointer;
+            transition: background 0.3s;
+            display: inline-block;
+            margin: 4px;
+        }
+
+        .btn:hover {
+            background: #45a049;
+        }
+
+        .btn-secondary {
+            background: #555;
+        }
+
+        .btn-secondary:hover {
+            background: #666;
+        }
+
+        .btn-danger {
+            background: #f44336;
+        }
+
+        .btn-danger:hover {
+            background: #da190b;
+        }
+
+        .book-list {
+            margin-top: 20px;
+        }
+
+        .book-item {
+            background: #252525;
+            border-radius: 8px;
+            padding: 16px;
+            margin-bottom: 12px;
+            box-shadow: 0 2px 4px rgba(0,0,0,0.2);
+        }
+
+        .book-title {
+            font-size: 18px;
+            font-weight: bold;
+            margin-bottom: 8px;
+            word-break: break-word;
+        }
+
+        .book-progress {
+            font-size: 14px;
+            color: #888;
+            margin-bottom: 12px;
+        }
+
+        .progress-bar {
+            height: 4px;
+            background: #333;
+            border-radius: 2px;
+            margin: 8px 0;
+            overflow: hidden;
+        }
+
+        .progress-fill {
+            height: 100%;
+            background: #4CAF50;
+            transition: width 0.3s;
+        }
+
+        .book-actions {
+            display: flex;
+            gap: 8px;
+        }
+
+        .book-actions .btn {
+            flex: 1;
+            margin: 0;
+        }
+
+        #readerView {
+            display: none;
+            position: fixed;
+            top: 0;
+            left: 0;
+            right: 0;
+            bottom: 0;
+            background: #1a1a1a;
+            z-index: 1000;
+        }
+
+        #readerView.active {
+            display: flex;
+            flex-direction: column;
+        }
+
+        .reader-header {
+            background: #252525;
+            padding: 12px 16px;
+            display: flex;
+            align-items: center;
+            gap: 12px;
+            box-shadow: 0 2px 8px rgba(0,0,0,0.3);
+        }
+
+        .reader-title {
+            flex: 1;
+            font-size: 16px;
+            font-weight: bold;
+            overflow: hidden;
+            text-overflow: ellipsis;
+            white-space: nowrap;
+        }
+
+        .reader-content {
+            flex: 1;
+            overflow: auto;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            position: relative;
+        }
+
+        #pdfCanvas {
+            max-width: 100%;
+            max-height: 100%;
+            display: block;
+        }
+
+        .reader-controls {
+            background: #252525;
+            padding: 12px 16px;
+            display: flex;
+            align-items: center;
+            gap: 12px;
+            box-shadow: 0 -2px 8px rgba(0,0,0,0.3);
+        }
+
+        .page-info {
+            flex: 1;
+            text-align: center;
+            font-size: 14px;
+        }
+
+        .loading {
+            text-align: center;
+            padding: 20px;
+            color: #888;
+        }
+
+        .empty-state {
+            text-align: center;
+            padding: 40px 20px;
+            color: #666;
+        }
+
+        .empty-state-icon {
+            font-size: 64px;
+            margin-bottom: 16px;
+        }
+
+        @media (max-width: 480px) {
+            .btn {
+                padding: 10px 16px;
+                font-size: 14px;
+            }
+            
+            h1 {
+                font-size: 20px;
+            }
+        }
+
+        .install-prompt {
+            background: #2a2a2a;
+            border: 1px solid #4CAF50;
+            border-radius: 8px;
+            padding: 16px;
+            margin-bottom: 20px;
+            display: none;
+        }
+
+        .install-prompt.show {
+            display: block;
+        }
+
+        .install-prompt p {
+            margin-bottom: 12px;
+        }
+    </style>
+</head>
+<body>
+    <div class="container" id="homeView">
+        <header>
+            <h1>📚 Book Reader</h1>
+            <p class="subtitle">Your offline PDF library</p>
+        </header>
+
+        <div class="install-prompt" id="installPrompt">
+            <p><strong>Install this app!</strong> Add to your home screen for a better experience.</p>
+            <button class="btn" id="installButton">Install</button>
+            <button class="btn btn-secondary" id="dismissInstall">Dismiss</button>
+        </div>
+
+        <div class="upload-section" id="uploadSection">
+            <div class="upload-icon">📤</div>
+            <h3>Upload a PDF Book</h3>
+            <p style="margin: 12px 0; color: #888;">Click or drag and drop</p>
+            <button class="btn">Choose File</button>
+            <input type="file" id="fileInput" accept=".pdf,application/pdf" multiple>
+        </div>
+
+        <div class="book-list" id="bookList"></div>
+    </div>
+
+    <div id="readerView">
+        <div class="reader-header">
+            <button class="btn btn-secondary" id="closeReader">←</button>
+            <div class="reader-title" id="readerTitle"></div>
+        </div>
+        <div class="reader-content">
+            <canvas id="pdfCanvas"></canvas>
+        </div>
+        <div class="reader-controls">
+            <button class="btn btn-secondary" id="prevPage">Previous</button>
+            <div class="page-info" id="pageInfo">Page 1 of 1</div>
+            <button class="btn btn-secondary" id="nextPage">Next</button>
+        </div>
+    </div>
+
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/pdf.js/3.11.174/pdf.min.js" 
+            integrity="sha512-bcRQdZu/3y5FM/W/5UvRlfwD3s1SmxrZWL0bobadkGL+ygsNqV0td7xZEeGAvkjWACYnzP11mNtM+iGkzlf1TQ==" 
+            crossorigin="anonymous" 
+            referrerpolicy="no-referrer"></script>
+    <script>
+        // Initialize PDF.js with error handling
+        if (typeof pdfjsLib !== 'undefined') {
+            pdfjsLib.GlobalWorkerOptions.workerSrc = 'https://cdnjs.cloudflare.com/ajax/libs/pdf.js/3.11.174/pdf.worker.min.js';
+        } else {
+            console.warn('PDF.js not loaded - may be blocked by ad blocker or network');
+        }
+
+        // Database management
+        const DB_NAME = 'BookReaderDB';
+        const DB_VERSION = 1;
+        let db;
+
+        function initDB() {
+            return new Promise((resolve, reject) => {
+                const request = indexedDB.open(DB_NAME, DB_VERSION);
+                
+                request.onerror = () => reject(request.error);
+                request.onsuccess = () => {
+                    db = request.result;
+                    resolve(db);
+                };
+                
+                request.onupgradeneeded = (event) => {
+                    const db = event.target.result;
+                    
+                    if (!db.objectStoreNames.contains('books')) {
+                        const booksStore = db.createObjectStore('books', { keyPath: 'id', autoIncrement: true });
+                        booksStore.createIndex('name', 'name', { unique: false });
+                    }
+                    
+                    if (!db.objectStoreNames.contains('progress')) {
+                        const progressStore = db.createObjectStore('progress', { keyPath: 'bookId' });
+                    }
+                };
+            });
+        }
+
+        async function saveBook(name, data) {
+            const transaction = db.transaction(['books'], 'readwrite');
+            const store = transaction.objectStore('books');
+            return new Promise((resolve, reject) => {
+                const request = store.add({ name, data, addedAt: Date.now() });
+                request.onsuccess = () => resolve(request.result);
+                request.onerror = () => reject(request.error);
+            });
+        }
+
+        async function getAllBooks() {
+            const transaction = db.transaction(['books'], 'readonly');
+            const store = transaction.objectStore('books');
+            return new Promise((resolve, reject) => {
+                const request = store.getAll();
+                request.onsuccess = () => resolve(request.result);
+                request.onerror = () => reject(request.error);
+            });
+        }
+
+        async function getBook(id) {
+            const transaction = db.transaction(['books'], 'readonly');
+            const store = transaction.objectStore('books');
+            return new Promise((resolve, reject) => {
+                const request = store.get(id);
+                request.onsuccess = () => resolve(request.result);
+                request.onerror = () => reject(request.error);
+            });
+        }
+
+        async function deleteBook(id) {
+            const transaction = db.transaction(['books', 'progress'], 'readwrite');
+            const booksStore = transaction.objectStore('books');
+            const progressStore = transaction.objectStore('progress');
+            
+            return Promise.all([
+                new Promise((resolve, reject) => {
+                    const request = booksStore.delete(id);
+                    request.onsuccess = () => resolve();
+                    request.onerror = () => reject(request.error);
+                }),
+                new Promise((resolve, reject) => {
+                    const request = progressStore.delete(id);
+                    request.onsuccess = () => resolve();
+                    request.onerror = () => reject(request.error);
+                })
+            ]);
+        }
+
+        async function saveProgress(bookId, currentPage, totalPages) {
+            const transaction = db.transaction(['progress'], 'readwrite');
+            const store = transaction.objectStore('progress');
+            return new Promise((resolve, reject) => {
+                const request = store.put({ bookId, currentPage, totalPages, lastRead: Date.now() });
+                request.onsuccess = () => resolve();
+                request.onerror = () => reject(request.error);
+            });
+        }
+
+        async function getProgress(bookId) {
+            const transaction = db.transaction(['progress'], 'readonly');
+            const store = transaction.objectStore('progress');
+            return new Promise((resolve, reject) => {
+                const request = store.get(bookId);
+                request.onsuccess = () => resolve(request.result || { currentPage: 1 });
+                request.onerror = () => reject(request.error);
+            });
+        }
+
+        // UI Management
+        let currentBook = null;
+        let currentPdfDoc = null;
+        let currentPage = 1;
+        let totalPages = 0;
+
+        async function displayBooks() {
+            const bookList = document.getElementById('bookList');
+            const books = await getAllBooks();
+            
+            if (books.length === 0) {
+                bookList.innerHTML = `
+                    <div class="empty-state">
+                        <div class="empty-state-icon">📖</div>
+                        <p>No books yet. Upload a PDF to get started!</p>
+                    </div>
+                `;
+                return;
+            }
+            
+            bookList.innerHTML = '';
+            
+            for (const book of books) {
+                const progress = await getProgress(book.id);
+                const percentage = progress.totalPages ? 
+                    Math.round((progress.currentPage / progress.totalPages) * 100) : 0;
+                
+                const bookItem = document.createElement('div');
+                bookItem.className = 'book-item';
+                
+                const bookTitle = document.createElement('div');
+                bookTitle.className = 'book-title';
+                bookTitle.textContent = book.name;
+                
+                const bookProgress = document.createElement('div');
+                bookProgress.className = 'book-progress';
+                bookProgress.textContent = progress.totalPages ? 
+                    `Page ${progress.currentPage} of ${progress.totalPages}` : 
+                    'Not started';
+                
+                const progressBar = document.createElement('div');
+                progressBar.className = 'progress-bar';
+                const progressFill = document.createElement('div');
+                progressFill.className = 'progress-fill';
+                progressFill.style.width = `${percentage}%`;
+                progressBar.appendChild(progressFill);
+                
+                const bookActions = document.createElement('div');
+                bookActions.className = 'book-actions';
+                
+                const readBtn = document.createElement('button');
+                readBtn.className = 'btn';
+                readBtn.textContent = progress.currentPage > 1 ? 'Continue Reading' : 'Start Reading';
+                readBtn.addEventListener('click', () => openBook(book.id));
+                
+                const deleteBtn = document.createElement('button');
+                deleteBtn.className = 'btn btn-danger';
+                deleteBtn.textContent = 'Delete';
+                deleteBtn.addEventListener('click', () => confirmDelete(book.id, book.name));
+                
+                bookActions.appendChild(readBtn);
+                bookActions.appendChild(deleteBtn);
+                
+                bookItem.appendChild(bookTitle);
+                bookItem.appendChild(bookProgress);
+                bookItem.appendChild(progressBar);
+                bookItem.appendChild(bookActions);
+                
+                bookList.appendChild(bookItem);
+            }
+        }
+
+        async function handleFileUpload(files) {
+            for (const file of files) {
+                if (file.type === 'application/pdf') {
+                    try {
+                        const arrayBuffer = await file.arrayBuffer();
+                        await saveBook(file.name, arrayBuffer);
+                    } catch (error) {
+                        console.error('Error uploading book:', error);
+                        alert(`Failed to upload ${file.name}`);
+                    }
+                }
+            }
+            displayBooks();
+        }
+
+        async function openBook(bookId) {
+            const book = await getBook(bookId);
+            if (!book) return;
+            
+            // Check if PDF.js is available
+            if (typeof pdfjsLib === 'undefined') {
+                alert('PDF viewer is not available. Please ensure you have an internet connection and refresh the page.');
+                return;
+            }
+            
+            currentBook = book;
+            const progress = await getProgress(bookId);
+            
+            document.getElementById('homeView').style.display = 'none';
+            document.getElementById('readerView').classList.add('active');
+            document.getElementById('readerTitle').textContent = book.name;
+            
+            try {
+                const loadingTask = pdfjsLib.getDocument({ data: book.data });
+                currentPdfDoc = await loadingTask.promise;
+                totalPages = currentPdfDoc.numPages;
+                currentPage = progress.currentPage || 1;
+                
+                await renderPage(currentPage);
+                updatePageInfo();
+                await saveProgress(bookId, currentPage, totalPages);
+            } catch (error) {
+                console.error('Error opening PDF:', error);
+                alert('Failed to open PDF. The file may be corrupted.');
+                closeReader();
+            }
+        }
+
+        async function renderPage(pageNum) {
+            const page = await currentPdfDoc.getPage(pageNum);
+            const canvas = document.getElementById('pdfCanvas');
+            const context = canvas.getContext('2d');
+            
+            const viewport = page.getViewport({ scale: 1 });
+            const scale = Math.min(
+                window.innerWidth / viewport.width,
+                (window.innerHeight - 120) / viewport.height
+            );
+            const scaledViewport = page.getViewport({ scale });
+            
+            canvas.width = scaledViewport.width;
+            canvas.height = scaledViewport.height;
+            
+            await page.render({
+                canvasContext: context,
+                viewport: scaledViewport
+            }).promise;
+        }
+
+        function updatePageInfo() {
+            document.getElementById('pageInfo').textContent = 
+                `Page ${currentPage} of ${totalPages}`;
+            
+            document.getElementById('prevPage').disabled = currentPage <= 1;
+            document.getElementById('nextPage').disabled = currentPage >= totalPages;
+        }
+
+        async function goToPage(pageNum) {
+            if (pageNum < 1 || pageNum > totalPages) return;
+            
+            currentPage = pageNum;
+            await renderPage(currentPage);
+            updatePageInfo();
+            
+            if (currentBook) {
+                await saveProgress(currentBook.id, currentPage, totalPages);
+            }
+        }
+
+        function closeReader() {
+            document.getElementById('readerView').classList.remove('active');
+            document.getElementById('homeView').style.display = 'block';
+            
+            if (currentPdfDoc) {
+                currentPdfDoc.destroy();
+                currentPdfDoc = null;
+            }
+            currentBook = null;
+        }
+
+        async function confirmDelete(bookId, bookName) {
+            if (confirm(`Are you sure you want to delete "${bookName}"?`)) {
+                await deleteBook(bookId);
+                displayBooks();
+            }
+        }
+
+        // Event Listeners
+        document.getElementById('uploadSection').addEventListener('click', () => {
+            document.getElementById('fileInput').click();
+        });
+
+        document.getElementById('fileInput').addEventListener('change', (e) => {
+            if (e.target.files.length > 0) {
+                handleFileUpload(e.target.files);
+                e.target.value = '';
+            }
+        });
+
+        // Drag and drop
+        const uploadSection = document.getElementById('uploadSection');
+        
+        uploadSection.addEventListener('dragover', (e) => {
+            e.preventDefault();
+            uploadSection.classList.add('dragover');
+        });
+
+        uploadSection.addEventListener('dragleave', () => {
+            uploadSection.classList.remove('dragover');
+        });
+
+        uploadSection.addEventListener('drop', (e) => {
+            e.preventDefault();
+            uploadSection.classList.remove('dragover');
+            
+            const files = Array.from(e.dataTransfer.files).filter(f => f.type === 'application/pdf');
+            if (files.length > 0) {
+                handleFileUpload(files);
+            }
+        });
+
+        document.getElementById('closeReader').addEventListener('click', closeReader);
+        document.getElementById('prevPage').addEventListener('click', () => goToPage(currentPage - 1));
+        document.getElementById('nextPage').addEventListener('click', () => goToPage(currentPage + 1));
+
+        // Service Worker
+        if ('serviceWorker' in navigator) {
+            window.addEventListener('load', () => {
+                // Create service worker inline
+                const swCode = `
+                    const CACHE_NAME = 'book-reader-v1';
+                    const APP_PATH = location.pathname.substring(0, location.pathname.lastIndexOf('/') + 1);
+                    const urlsToCache = [APP_PATH];
+
+                    self.addEventListener('install', (event) => {
+                        event.waitUntil(
+                            caches.open(CACHE_NAME)
+                                .then((cache) => cache.addAll(urlsToCache))
+                        );
+                        self.skipWaiting();
+                    });
+
+                    self.addEventListener('fetch', (event) => {
+                        event.respondWith(
+                            caches.match(event.request)
+                                .then((response) => {
+                                    if (response) {
+                                        return response;
+                                    }
+                                    return fetch(event.request).then((response) => {
+                                        if (!response || response.status !== 200 || response.type !== 'basic') {
+                                            return response;
+                                        }
+                                        const responseToCache = response.clone();
+                                        caches.open(CACHE_NAME).then((cache) => {
+                                            cache.put(event.request, responseToCache);
+                                        });
+                                        return response;
+                                    }).catch(() => {
+                                        return caches.match(APP_PATH + 'index.html');
+                                    });
+                                })
+                        );
+                    });
+
+                    self.addEventListener('activate', (event) => {
+                        event.waitUntil(
+                            caches.keys().then((cacheNames) => {
+                                return Promise.all(
+                                    cacheNames.map((cacheName) => {
+                                        if (cacheName !== CACHE_NAME) {
+                                            return caches.delete(cacheName);
+                                        }
+                                    })
+                                );
+                            })
+                        );
+                    });
+                `;
+
+                const blob = new Blob([swCode], { type: 'application/javascript' });
+                const swUrl = URL.createObjectURL(blob);
+
+                navigator.serviceWorker.register(swUrl)
+                    .then(() => console.log('Service Worker registered'))
+                    .catch((error) => console.error('Service Worker registration failed:', error));
+            });
+        }
+
+        // PWA Install Prompt
+        let deferredPrompt;
+
+        window.addEventListener('beforeinstallprompt', (e) => {
+            e.preventDefault();
+            deferredPrompt = e;
+            document.getElementById('installPrompt').classList.add('show');
+        });
+
+        document.getElementById('installButton').addEventListener('click', async () => {
+            if (deferredPrompt) {
+                deferredPrompt.prompt();
+                const { outcome } = await deferredPrompt.userChoice;
+                console.log(`User response to install prompt: ${outcome}`);
+                deferredPrompt = null;
+                document.getElementById('installPrompt').classList.remove('show');
+            }
+        });
+
+        document.getElementById('dismissInstall').addEventListener('click', () => {
+            document.getElementById('installPrompt').classList.remove('show');
+        });
+
+        // Manifest
+        const getBasePath = () => {
+            const path = window.location.pathname;
+            return path.substring(0, path.lastIndexOf('/') + 1) || './';
+        };
+
+        const manifest = {
+            name: 'Book Reader',
+            short_name: 'Books',
+            description: 'Offline PDF Book Reader',
+            start_url: './',
+            scope: './',
+            display: 'standalone',
+            background_color: '#1a1a1a',
+            theme_color: '#1a1a1a',
+            orientation: 'portrait-primary',
+            icons: [
+                {
+                    src: 'data:image/svg+xml,%3Csvg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 100 100"%3E%3Crect fill="%234CAF50" width="100" height="100"/%3E%3Ctext y="75" font-size="75" text-anchor="middle" x="50"%3E📚%3C/text%3E%3C/svg%3E',
+                    sizes: '192x192',
+                    type: 'image/svg+xml',
+                    purpose: 'any maskable'
+                },
+                {
+                    src: 'data:image/svg+xml,%3Csvg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 100 100"%3E%3Crect fill="%234CAF50" width="100" height="100"/%3E%3Ctext y="75" font-size="75" text-anchor="middle" x="50"%3E📚%3C/text%3E%3C/svg%3E',
+                    sizes: '512x512',
+                    type: 'image/svg+xml',
+                    purpose: 'any maskable'
+                }
+            ]
+        };
+
+        const manifestBlob = new Blob([JSON.stringify(manifest)], { type: 'application/json' });
+        const manifestURL = URL.createObjectURL(manifestBlob);
+        document.getElementById('manifestLink').setAttribute('href', manifestURL);
+
+        // Initialize app
+        window.addEventListener('DOMContentLoaded', () => {
+            initDB().then(() => {
+                displayBooks();
+            }).catch((error) => {
+                console.error('Failed to initialize database:', error);
+                alert('Failed to initialize the app. Please try refreshing the page.');
+            });
+        });
+    </script>
+</body>
+</html>
