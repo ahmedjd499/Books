@@ -5,8 +5,10 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
     <meta name="theme-color" content="#1a1a1a">
     <meta name="description" content="Offline PDF Book Reader - Read and track your books">
-    <link rel="manifest" href="data:application/json;base64,">
-    <link rel="icon" type="image/png" href="data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAYAAAAfFcSJAAAADUlEQVR42mNk+M9QDwADhgGAWjR9awAAAABJRU5ErkJggg==">
+    <meta name="apple-mobile-web-app-capable" content="yes">
+    <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+    <link rel="manifest" id="manifestLink" href="#">
+    <link rel="icon" type="image/svg+xml" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'%3E%3Crect fill='%234CAF50' width='100' height='100'/%3E%3Ctext y='75' font-size='75' text-anchor='middle' x='50'%3E📚%3C/text%3E%3C/svg%3E">
     <title>Book Reader</title>
     <style>
         * {
@@ -309,8 +311,12 @@
 
     <script src="https://cdnjs.cloudflare.com/ajax/libs/pdf.js/3.11.174/pdf.min.js"></script>
     <script>
-        // Initialize PDF.js
-        pdfjsLib.GlobalWorkerOptions.workerSrc = 'https://cdnjs.cloudflare.com/ajax/libs/pdf.js/3.11.174/pdf.worker.min.js';
+        // Initialize PDF.js with error handling
+        if (typeof pdfjsLib !== 'undefined') {
+            pdfjsLib.GlobalWorkerOptions.workerSrc = 'https://cdnjs.cloudflare.com/ajax/libs/pdf.js/3.11.174/pdf.worker.min.js';
+        } else {
+            console.warn('PDF.js not loaded - may be blocked by ad blocker or network');
+        }
 
         // Database management
         const DB_NAME = 'BookReaderDB';
@@ -485,6 +491,12 @@
         async function openBook(bookId) {
             const book = await getBook(bookId);
             if (!book) return;
+            
+            // Check if PDF.js is available
+            if (typeof pdfjsLib === 'undefined') {
+                alert('PDF viewer is not available. Please ensure you have an internet connection and refresh the page.');
+                return;
+            }
             
             currentBook = book;
             const progress = await getProgress(bookId);
@@ -697,35 +709,40 @@
             name: 'Book Reader',
             short_name: 'Books',
             description: 'Offline PDF Book Reader',
-            start_url: './',
+            start_url: '/index.html',
+            scope: '/',
             display: 'standalone',
             background_color: '#1a1a1a',
             theme_color: '#1a1a1a',
             orientation: 'portrait-primary',
             icons: [
                 {
-                    src: 'data:image/svg+xml,<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 100 100"><rect fill="%234CAF50" width="100" height="100"/><text y="75" font-size="75" text-anchor="middle" x="50">📚</text></svg>',
+                    src: 'data:image/svg+xml,%3Csvg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 100 100"%3E%3Crect fill="%234CAF50" width="100" height="100"/%3E%3Ctext y="75" font-size="75" text-anchor="middle" x="50"%3E📚%3C/text%3E%3C/svg%3E',
                     sizes: '192x192',
-                    type: 'image/svg+xml'
+                    type: 'image/svg+xml',
+                    purpose: 'any maskable'
                 },
                 {
-                    src: 'data:image/svg+xml,<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 100 100"><rect fill="%234CAF50" width="100" height="100"/><text y="75" font-size="75" text-anchor="middle" x="50">📚</text></svg>',
+                    src: 'data:image/svg+xml,%3Csvg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 100 100"%3E%3Crect fill="%234CAF50" width="100" height="100"/%3E%3Ctext y="75" font-size="75" text-anchor="middle" x="50"%3E📚%3C/text%3E%3C/svg%3E',
                     sizes: '512x512',
-                    type: 'image/svg+xml'
+                    type: 'image/svg+xml',
+                    purpose: 'any maskable'
                 }
             ]
         };
 
         const manifestBlob = new Blob([JSON.stringify(manifest)], { type: 'application/json' });
         const manifestURL = URL.createObjectURL(manifestBlob);
-        document.querySelector('link[rel="manifest"]').setAttribute('href', manifestURL);
+        document.getElementById('manifestLink').setAttribute('href', manifestURL);
 
         // Initialize app
-        initDB().then(() => {
-            displayBooks();
-        }).catch((error) => {
-            console.error('Failed to initialize database:', error);
-            alert('Failed to initialize the app. Please try refreshing the page.');
+        window.addEventListener('DOMContentLoaded', () => {
+            initDB().then(() => {
+                displayBooks();
+            }).catch((error) => {
+                console.error('Failed to initialize database:', error);
+                alert('Failed to initialize the app. Please try refreshing the page.');
+            });
         });
     </script>
 </body>
