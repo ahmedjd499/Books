@@ -322,38 +322,262 @@
             margin-bottom: 12px;
         }
 
-        .continue-reading {
-            background: linear-gradient(135deg, #2a4a2a 0%, #1a3a1a 100%);
-            border: 2px solid #4CAF50;
-            border-radius: 8px;
-            padding: 20px;
-            margin-bottom: 20px;
+        /* Floating action button for continue reading */
+        .fab-container {
+            position: fixed;
+            bottom: 80px;
+            right: 20px;
+            z-index: 999;
             display: none;
         }
 
-        .continue-reading.show {
+        .fab-container.show {
             display: block;
         }
 
-        .continue-reading-label {
-            color: #4CAF50;
+        .fab {
+            width: 60px;
+            height: 60px;
+            border-radius: 50%;
+            background: linear-gradient(135deg, #4CAF50 0%, #45a049 100%);
+            box-shadow: 0 4px 12px rgba(76, 175, 80, 0.4);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            cursor: pointer;
+            transition: all 0.3s;
+            border: 3px solid #2a2a2a;
+        }
+
+        .fab:hover {
+            transform: scale(1.1);
+            box-shadow: 0 6px 20px rgba(76, 175, 80, 0.6);
+        }
+
+        .fab:active {
+            transform: scale(0.95);
+        }
+
+        .fab-icon {
+            width: 0;
+            height: 0;
+            border-left: 12px solid transparent;
+            border-right: 12px solid transparent;
+            border-bottom: 20px solid white;
+            transform: rotate(90deg);
+        }
+
+        .fab-tooltip {
+            position: absolute;
+            right: 70px;
+            top: 50%;
+            transform: translateY(-50%);
+            background: #252525;
+            color: #e0e0e0;
+            padding: 8px 12px;
+            border-radius: 6px;
+            white-space: nowrap;
             font-size: 12px;
-            font-weight: bold;
-            text-transform: uppercase;
-            margin-bottom: 8px;
-            letter-spacing: 1px;
+            pointer-events: none;
+            opacity: 0;
+            transition: opacity 0.3s;
+            box-shadow: 0 2px 8px rgba(0,0,0,0.3);
+            max-width: 200px;
         }
 
-        .continue-reading-title {
-            font-size: 18px;
-            font-weight: bold;
-            margin-bottom: 8px;
+        .fab-container:hover .fab-tooltip {
+            opacity: 1;
         }
 
-        .continue-reading-progress {
+        /* Upload modal */
+        .modal {
+            display: none;
+            position: fixed;
+            top: 0;
+            left: 0;
+            right: 0;
+            bottom: 0;
+            background: rgba(0, 0, 0, 0.8);
+            z-index: 2000;
+            align-items: center;
+            justify-content: center;
+            padding: 20px;
+        }
+
+        .modal.show {
+            display: flex;
+        }
+
+        .modal-content {
+            background: #252525;
+            border-radius: 12px;
+            padding: 30px;
+            max-width: 500px;
+            width: 100%;
+            box-shadow: 0 8px 32px rgba(0,0,0,0.5);
+        }
+
+        .modal-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 20px;
+        }
+
+        .modal-title {
+            font-size: 20px;
+            font-weight: bold;
+        }
+
+        .modal-close {
+            background: none;
+            border: none;
+            color: #888;
+            font-size: 28px;
+            cursor: pointer;
+            padding: 0;
+            width: 32px;
+            height: 32px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            transition: color 0.3s;
+        }
+
+        .modal-close:hover {
+            color: #e0e0e0;
+        }
+
+        .upload-area {
+            background: #1a1a1a;
+            border: 2px dashed #444;
+            border-radius: 8px;
+            padding: 40px;
+            text-align: center;
+            cursor: pointer;
+            transition: all 0.3s;
+        }
+
+        .upload-area:hover {
+            border-color: #666;
+            background: #222;
+        }
+
+        .upload-area.dragover {
+            border-color: #4CAF50;
+            background: #2a3a2a;
+        }
+
+        /* Loading overlay */
+        .loading-overlay {
+            display: none;
+            position: fixed;
+            top: 0;
+            left: 0;
+            right: 0;
+            bottom: 0;
+            background: rgba(26, 26, 26, 0.95);
+            z-index: 1001;
+            align-items: center;
+            justify-content: center;
+            flex-direction: column;
+        }
+
+        .loading-overlay.show {
+            display: flex;
+        }
+
+        .loading-spinner {
+            width: 50px;
+            height: 50px;
+            border: 4px solid #333;
+            border-top: 4px solid #4CAF50;
+            border-radius: 50%;
+            animation: spin 1s linear infinite;
+        }
+
+        @keyframes spin {
+            0% { transform: rotate(0deg); }
+            100% { transform: rotate(360deg); }
+        }
+
+        .loading-text {
+            margin-top: 20px;
+            color: #888;
+            font-size: 16px;
+        }
+
+        /* Sort controls */
+        .sort-controls {
+            background: #252525;
+            border-radius: 8px;
+            padding: 16px;
+            margin-bottom: 20px;
+            display: flex;
+            gap: 8px;
+            align-items: center;
+            flex-wrap: wrap;
+        }
+
+        .sort-label {
+            color: #888;
             font-size: 14px;
-            color: #aaa;
-            margin-bottom: 12px;
+            font-weight: bold;
+        }
+
+        .sort-btn {
+            background: #333;
+            color: #e0e0e0;
+            border: 1px solid #444;
+            padding: 8px 16px;
+            border-radius: 6px;
+            font-size: 14px;
+            cursor: pointer;
+            transition: all 0.3s;
+        }
+
+        .sort-btn:hover {
+            background: #3a3a3a;
+            border-color: #555;
+        }
+
+        .sort-btn.active {
+            background: #4CAF50;
+            border-color: #4CAF50;
+            color: white;
+        }
+
+        /* Add book FAB */
+        .add-book-fab {
+            position: fixed;
+            bottom: 20px;
+            right: 20px;
+            width: 60px;
+            height: 60px;
+            border-radius: 50%;
+            background: linear-gradient(135deg, #4CAF50 0%, #45a049 100%);
+            box-shadow: 0 4px 12px rgba(76, 175, 80, 0.4);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            cursor: pointer;
+            transition: all 0.3s;
+            border: 3px solid #2a2a2a;
+            z-index: 998;
+        }
+
+        .add-book-fab:hover {
+            transform: scale(1.1);
+            box-shadow: 0 6px 20px rgba(76, 175, 80, 0.6);
+        }
+
+        .add-book-fab:active {
+            transform: scale(0.95);
+        }
+
+        .add-book-fab-icon {
+            font-size: 32px;
+            color: white;
         }
     </style>
 </head>
@@ -370,22 +594,51 @@
             <button class="btn btn-secondary" id="dismissInstall">Dismiss</button>
         </div>
 
-        <div class="continue-reading" id="continueReading">
-            <div class="continue-reading-label">Continue Reading</div>
-            <div class="continue-reading-title" id="continueReadingTitle"></div>
-            <div class="continue-reading-progress" id="continueReadingProgress"></div>
-            <button class="btn" id="continueReadingBtn">Continue Reading</button>
-        </div>
-
-        <div class="upload-section" id="uploadSection">
-            <div class="upload-icon">📤</div>
-            <h3>Upload a PDF Book</h3>
-            <p style="margin: 12px 0; color: #888;">Click or drag and drop</p>
-            <button class="btn">Choose File</button>
-            <input type="file" id="fileInput" accept=".pdf,application/pdf" multiple>
+        <div class="sort-controls" id="sortControls">
+            <span class="sort-label">Sort by:</span>
+            <button class="sort-btn active" data-sort="dateAdded">Date Added</button>
+            <button class="sort-btn" data-sort="lastRead">Last Read</button>
+            <button class="sort-btn" data-sort="progress">Progress</button>
+            <button class="sort-btn" data-sort="name">Name</button>
         </div>
 
         <div class="book-list" id="bookList"></div>
+    </div>
+
+    <!-- Continue Reading FAB -->
+    <div class="fab-container" id="fabContainer">
+        <div class="fab-tooltip" id="fabTooltip">Continue reading...</div>
+        <div class="fab" id="continueReadingFab">
+            <div class="fab-icon"></div>
+        </div>
+    </div>
+
+    <!-- Add Book FAB -->
+    <div class="add-book-fab" id="addBookFab">
+        <div class="add-book-fab-icon">+</div>
+    </div>
+
+    <!-- Upload Modal -->
+    <div class="modal" id="uploadModal">
+        <div class="modal-content">
+            <div class="modal-header">
+                <div class="modal-title">Upload PDF Books</div>
+                <button class="modal-close" id="modalClose">×</button>
+            </div>
+            <div class="upload-area" id="uploadArea">
+                <div class="upload-icon">📤</div>
+                <h3>Upload PDF Books</h3>
+                <p style="margin: 12px 0; color: #888;">Click or drag and drop</p>
+                <button class="btn">Choose Files</button>
+                <input type="file" id="fileInput" accept=".pdf,application/pdf" multiple style="display: none;">
+            </div>
+        </div>
+    </div>
+
+    <!-- Loading Overlay -->
+    <div class="loading-overlay" id="loadingOverlay">
+        <div class="loading-spinner"></div>
+        <div class="loading-text">Loading book...</div>
     </div>
 
     <div id="readerView">
@@ -609,6 +862,8 @@
         let readerContentClickListenerAdded = false;
         let readerHeaderClickListenerAdded = false;
         let readerControlsClickListenerAdded = false;
+        let currentSort = 'dateAdded'; // Default sort
+        let lastReadBookId = null; // Track last read book ID
 
         // Throttle function to limit scroll event firing
         function throttle(func, delay) {
@@ -623,35 +878,45 @@
 
         async function displayBooks() {
             const bookList = document.getElementById('bookList');
-            const books = await getAllBooks();
+            let books = await getAllBooks();
             
-            // Handle continue reading section
+            // Get all progress data for sorting
+            const progressData = await getAllProgress();
+            const progressMap = new Map(progressData.map(p => [p.bookId, p]));
+            
+            // Handle continue reading FAB
             const lastReadProgress = await getLastReadBook();
             if (lastReadProgress && lastReadProgress.currentPage > 1) {
                 const lastReadBook = await getBook(lastReadProgress.bookId);
                 if (lastReadBook) {
-                    document.getElementById('continueReadingTitle').textContent = lastReadBook.name;
-                    document.getElementById('continueReadingProgress').textContent = 
-                        `Page ${lastReadProgress.currentPage} of ${lastReadProgress.totalPages}`;
-                    document.getElementById('continueReading').classList.add('show');
-                    
-                    // Set up click handler
-                    const continueBtn = document.getElementById('continueReadingBtn');
-                    continueBtn.onclick = () => openBook(lastReadBook.id);
+                    lastReadBookId = lastReadBook.id;
+                    const fabTooltip = document.getElementById('fabTooltip');
+                    fabTooltip.textContent = `Continue "${lastReadBook.name}" - Page ${lastReadProgress.currentPage} of ${lastReadProgress.totalPages}`;
+                    document.getElementById('fabContainer').classList.add('show');
+                } else {
+                    lastReadBookId = null;
+                    document.getElementById('fabContainer').classList.remove('show');
                 }
             } else {
-                document.getElementById('continueReading').classList.remove('show');
+                lastReadBookId = null;
+                document.getElementById('fabContainer').classList.remove('show');
             }
             
             if (books.length === 0) {
                 bookList.innerHTML = `
                     <div class="empty-state">
                         <div class="empty-state-icon">📖</div>
-                        <p>No books yet. Upload a PDF to get started!</p>
+                        <p>No books yet. Tap the + button to add a PDF!</p>
                     </div>
                 `;
+                document.getElementById('sortControls').style.display = 'none';
                 return;
             }
+            
+            document.getElementById('sortControls').style.display = 'flex';
+            
+            // Sort books based on current sort option
+            books = sortBooks(books, progressMap);
             
             bookList.innerHTML = '';
             
@@ -750,6 +1015,45 @@
             }
         }
 
+        function sortBooks(books, progressMap) {
+            switch (currentSort) {
+                case 'dateAdded':
+                    return books.sort((a, b) => (b.addedAt || 0) - (a.addedAt || 0));
+                case 'lastRead':
+                    return books.sort((a, b) => {
+                        const aProgress = progressMap.get(a.id);
+                        const bProgress = progressMap.get(b.id);
+                        const aLastRead = aProgress?.lastRead || 0;
+                        const bLastRead = bProgress?.lastRead || 0;
+                        return bLastRead - aLastRead;
+                    });
+                case 'progress':
+                    return books.sort((a, b) => {
+                        const aProgress = progressMap.get(a.id);
+                        const bProgress = progressMap.get(b.id);
+                        const aPercentage = aProgress?.totalPages ? 
+                            (aProgress.currentPage / aProgress.totalPages) : 0;
+                        const bPercentage = bProgress?.totalPages ? 
+                            (bProgress.currentPage / bProgress.totalPages) : 0;
+                        return bPercentage - aPercentage;
+                    });
+                case 'name':
+                    return books.sort((a, b) => a.name.localeCompare(b.name));
+                default:
+                    return books;
+            }
+        }
+
+        async function getAllProgress() {
+            const transaction = db.transaction(['progress'], 'readonly');
+            const store = transaction.objectStore('progress');
+            return new Promise((resolve, reject) => {
+                const request = store.getAll();
+                request.onsuccess = () => resolve(request.result);
+                request.onerror = () => reject(request.error);
+            });
+        }
+
         async function handleFileUpload(files) {
             for (const file of files) {
                 if (file.type === 'application/pdf') {
@@ -778,6 +1082,9 @@
             currentBook = book;
             const progress = await getProgress(bookId);
             
+            // Show loading overlay
+            document.getElementById('loadingOverlay').classList.add('show');
+            
             document.getElementById('homeView').style.display = 'none';
             document.getElementById('readerView').classList.add('active');
             document.getElementById('readerTitle').textContent = book.name;
@@ -794,13 +1101,21 @@
                 
                 await renderAllPages();
                 updatePageInfo();
+                
+                // Scroll to saved page after rendering
+                await new Promise(resolve => setTimeout(resolve, 100)); // Small delay to ensure rendering is complete
                 scrollToPage(currentPage);
+                
                 await saveProgress(bookId, currentPage, totalPages);
+                
+                // Hide loading overlay
+                document.getElementById('loadingOverlay').classList.remove('show');
                 
                 // Hide controls after a short delay
                 startHideControlsTimer();
             } catch (error) {
                 console.error('Error opening PDF:', error);
+                document.getElementById('loadingOverlay').classList.remove('show');
                 alert('Failed to open PDF. The file may be corrupted.');
                 closeReader();
             }
@@ -981,10 +1296,17 @@
             showControls();
             
             if (currentPdfDoc) {
-                currentPdfDoc.destroy();
+                try {
+                    currentPdfDoc.destroy();
+                } catch (error) {
+                    console.error('Error destroying PDF document:', error);
+                }
                 currentPdfDoc = null;
             }
             currentBook = null;
+            
+            // Update the continue reading FAB
+            displayBooks();
         }
 
         async function confirmDelete(bookId, bookName) {
@@ -995,7 +1317,26 @@
         }
 
         // Event Listeners
-        document.getElementById('uploadSection').addEventListener('click', () => {
+        
+        // Add book FAB
+        document.getElementById('addBookFab').addEventListener('click', () => {
+            document.getElementById('uploadModal').classList.add('show');
+        });
+
+        // Modal close
+        document.getElementById('modalClose').addEventListener('click', () => {
+            document.getElementById('uploadModal').classList.remove('show');
+        });
+
+        // Close modal on background click
+        document.getElementById('uploadModal').addEventListener('click', (e) => {
+            if (e.target.id === 'uploadModal') {
+                document.getElementById('uploadModal').classList.remove('show');
+            }
+        });
+
+        // Upload area click
+        document.getElementById('uploadArea').addEventListener('click', () => {
             document.getElementById('fileInput').click();
         });
 
@@ -1003,29 +1344,48 @@
             if (e.target.files.length > 0) {
                 handleFileUpload(e.target.files);
                 e.target.value = '';
+                document.getElementById('uploadModal').classList.remove('show');
             }
         });
 
-        // Drag and drop
-        const uploadSection = document.getElementById('uploadSection');
+        // Drag and drop for upload area
+        const uploadArea = document.getElementById('uploadArea');
         
-        uploadSection.addEventListener('dragover', (e) => {
+        uploadArea.addEventListener('dragover', (e) => {
             e.preventDefault();
-            uploadSection.classList.add('dragover');
+            uploadArea.classList.add('dragover');
         });
 
-        uploadSection.addEventListener('dragleave', () => {
-            uploadSection.classList.remove('dragover');
+        uploadArea.addEventListener('dragleave', () => {
+            uploadArea.classList.remove('dragover');
         });
 
-        uploadSection.addEventListener('drop', (e) => {
+        uploadArea.addEventListener('drop', (e) => {
             e.preventDefault();
-            uploadSection.classList.remove('dragover');
+            uploadArea.classList.remove('dragover');
             
             const files = Array.from(e.dataTransfer.files).filter(f => f.type === 'application/pdf');
             if (files.length > 0) {
                 handleFileUpload(files);
+                document.getElementById('uploadModal').classList.remove('show');
             }
+        });
+
+        // Continue reading FAB
+        document.getElementById('continueReadingFab').addEventListener('click', () => {
+            if (lastReadBookId) {
+                openBook(lastReadBookId);
+            }
+        });
+
+        // Sort buttons
+        document.querySelectorAll('.sort-btn').forEach(btn => {
+            btn.addEventListener('click', (e) => {
+                document.querySelectorAll('.sort-btn').forEach(b => b.classList.remove('active'));
+                e.target.classList.add('active');
+                currentSort = e.target.dataset.sort;
+                displayBooks();
+            });
         });
 
         document.getElementById('closeReader').addEventListener('click', closeReader);
