@@ -309,11 +309,15 @@
         </div>
     </div>
 
-    <script src="build/pdfjs/pdf.min.js"></script>
-    <script>
+    <script type="module">
+        // Import PDF.js as ES module
+        import * as pdfjsLib from './build/pdfjs/pdf.min.mjs';
+        
         // Initialize PDF.js with error handling
-        if (typeof pdfjsLib !== 'undefined') {
-            pdfjsLib.GlobalWorkerOptions.workerSrc = 'build/pdfjs/pdf.worker.min.js';
+        if (pdfjsLib) {
+            pdfjsLib.GlobalWorkerOptions.workerSrc = 'build/pdfjs/pdf.worker.min.mjs';
+            // Make pdfjsLib available globally for compatibility
+            window.pdfjsLib = pdfjsLib;
         } else {
             console.warn('PDF.js not loaded - may be blocked by ad blocker or network');
         }

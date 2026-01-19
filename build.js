@@ -7,9 +7,9 @@ if (!fs.existsSync(buildDir)) {
   fs.mkdirSync(buildDir, { recursive: true });
 }
 
-// Copy PDF.js files
+// Copy PDF.js files (ES modules from version 4.x+)
 const sourceDir = path.join(__dirname, 'node_modules', 'pdfjs-dist', 'build');
-const files = ['pdf.min.js', 'pdf.worker.min.js'];
+const files = ['pdf.min.mjs', 'pdf.worker.min.mjs'];
 
 files.forEach(file => {
   const src = path.join(sourceDir, file);
