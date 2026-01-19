@@ -436,6 +436,7 @@
         let currentPage = 1;
         let totalPages = 0;
         let pageCanvases = [];
+        let scrollListenerAdded = false;
 
         async function displayBooks() {
             const bookList = document.getElementById('bookList');
@@ -590,11 +591,15 @@
         }
 
         function setupScrollTracking() {
+            if (scrollListenerAdded) return;
+            
             const readerContent = document.getElementById('readerContent');
             
             readerContent.addEventListener('scroll', () => {
                 updateCurrentPageFromScroll();
             });
+            
+            scrollListenerAdded = true;
         }
 
         function updateCurrentPageFromScroll() {
@@ -679,6 +684,7 @@
             const readerContent = document.getElementById('readerContent');
             readerContent.innerHTML = '';
             pageCanvases = [];
+            scrollListenerAdded = false;
             
             if (currentPdfDoc) {
                 currentPdfDoc.destroy();
