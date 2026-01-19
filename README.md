@@ -18,10 +18,19 @@ A Progressive Web App for reading and managing PDF books on Android devices with
 
 ## How to Use
 
-### Installation
-1. Open `index.html` in a web browser (Chrome/Edge recommended for best PDF support)
-2. On Android: Tap the browser menu and select "Add to Home Screen" or "Install App"
-3. The app will work offline after the first load
+### Installation and Setup
+
+**Prerequisites:**
+- Node.js and npm installed on your system
+
+**Steps:**
+1. Clone the repository
+2. Install dependencies: `npm install`
+3. Build the project: `npm run build`
+4. Start the development server: `npm run serve` (or use `npm start` to build and serve in one command)
+5. Open `http://localhost:8080/index.html` in a web browser (Chrome/Edge recommended for best PDF support)
+6. On Android: Tap the browser menu and select "Add to Home Screen" or "Install App"
+7. The app will work offline after the first load
 
 ### Reading Books
 1. **Upload a Book**: Click the upload area or drag-and-drop a PDF file
@@ -46,18 +55,23 @@ A Progressive Web App for reading and managing PDF books on Android devices with
 - Any modern browser with IndexedDB and Service Worker support
 
 ### PDF Rendering
-- Uses [PDF.js](https://mozilla.github.io/pdf.js/) library from CDN
-- Requires internet connection on first load to fetch PDF.js
-- After first load, works completely offline
+- Uses [PDF.js](https://mozilla.github.io/pdf.js/) library (version 4.9.155)
+- PDF.js is installed locally as a dependency via npm
+- ES modules for modern JavaScript support
+- No internet connection required after building the project
+- Works completely offline
+- Secure version with no known vulnerabilities
 
 ## File Structure
 
-This is a **single-file PWA** - everything is contained in `index.html`:
-- HTML structure
-- Embedded CSS styles
-- Embedded JavaScript code
-- Dynamic service worker generation
-- Dynamic manifest generation
+- **index.html** - Main application file containing:
+  - HTML structure
+  - Embedded CSS styles
+  - Embedded JavaScript code
+  - Dynamic service worker generation
+  - Dynamic manifest generation
+- **build/pdfjs/** - Contains the PDF.js library files (generated during build)
+- **package.json** - Node.js project configuration and dependencies
 
 ## Privacy & Security
 
@@ -68,12 +82,28 @@ This is a **single-file PWA** - everything is contained in `index.html`:
 
 ## Development
 
-To run locally:
+### Building the Project
 ```bash
-# Serve the file using any HTTP server
+# Install dependencies
+npm install
+
+# Build the project (copies PDF.js files to build directory)
+npm run build
+
+# Start development server
+npm run serve
+
+# Or build and serve in one command
+npm start
+```
+
+### Running Locally
+After building, you can also serve the file using any HTTP server:
+```bash
+# Using Python
 python3 -m http.server 8080
 
-# Or use Node.js
+# Using Node.js
 npx http-server -p 8080
 
 # Then open http://localhost:8080/index.html
