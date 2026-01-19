@@ -55,10 +55,12 @@ A Progressive Web App for reading and managing PDF books on Android devices with
 - Any modern browser with IndexedDB and Service Worker support
 
 ### PDF Rendering
-- Uses [PDF.js](https://mozilla.github.io/pdf.js/) library (version 3.11.174)
+- Uses [PDF.js](https://mozilla.github.io/pdf.js/) library (version 4.9.155)
 - PDF.js is installed locally as a dependency via npm
+- ES modules for modern JavaScript support
 - No internet connection required after building the project
 - Works completely offline
+- Secure version with no known vulnerabilities
 
 ## File Structure
 
