@@ -608,13 +608,13 @@
     <!-- Continue Reading FAB -->
     <div class="fab-container" id="fabContainer">
         <div class="fab-tooltip" id="fabTooltip">Continue reading...</div>
-        <div class="fab" id="continueReadingFab">
+        <div class="fab" id="continueReadingFab" role="button" aria-label="Continue reading last book" tabindex="0">
             <div class="fab-icon"></div>
         </div>
     </div>
 
     <!-- Add Book FAB -->
-    <div class="add-book-fab" id="addBookFab">
+    <div class="add-book-fab" id="addBookFab" role="button" aria-label="Add new book" tabindex="0">
         <div class="add-book-fab-icon">+</div>
     </div>
 
@@ -623,7 +623,7 @@
         <div class="modal-content">
             <div class="modal-header">
                 <div class="modal-title">Upload PDF Books</div>
-                <button class="modal-close" id="modalClose">×</button>
+                <button class="modal-close" id="modalClose" aria-label="Close modal">×</button>
             </div>
             <div class="upload-area" id="uploadArea">
                 <div class="upload-icon">📤</div>
@@ -1103,7 +1103,8 @@
                 updatePageInfo();
                 
                 // Scroll to saved page after rendering
-                await new Promise(resolve => setTimeout(resolve, 100)); // Small delay to ensure rendering is complete
+                const RENDERING_DELAY_MS = 100;
+                await new Promise(resolve => setTimeout(resolve, RENDERING_DELAY_MS)); // Small delay to ensure rendering is complete
                 scrollToPage(currentPage);
                 
                 await saveProgress(bookId, currentPage, totalPages);
@@ -1319,8 +1320,17 @@
         // Event Listeners
         
         // Add book FAB
-        document.getElementById('addBookFab').addEventListener('click', () => {
+        const addBookFab = document.getElementById('addBookFab');
+        addBookFab.addEventListener('click', () => {
             document.getElementById('uploadModal').classList.add('show');
+        });
+        
+        // Keyboard support for Add Book FAB
+        addBookFab.addEventListener('keydown', (e) => {
+            if (e.key === 'Enter' || e.key === ' ') {
+                e.preventDefault();
+                document.getElementById('uploadModal').classList.add('show');
+            }
         });
 
         // Modal close
@@ -1332,6 +1342,16 @@
         document.getElementById('uploadModal').addEventListener('click', (e) => {
             if (e.target.id === 'uploadModal') {
                 document.getElementById('uploadModal').classList.remove('show');
+            }
+        });
+        
+        // Close modal on Escape key
+        document.addEventListener('keydown', (e) => {
+            if (e.key === 'Escape') {
+                const modal = document.getElementById('uploadModal');
+                if (modal.classList.contains('show')) {
+                    modal.classList.remove('show');
+                }
             }
         });
 
@@ -1372,9 +1392,20 @@
         });
 
         // Continue reading FAB
-        document.getElementById('continueReadingFab').addEventListener('click', () => {
+        const continueReadingFab = document.getElementById('continueReadingFab');
+        continueReadingFab.addEventListener('click', () => {
             if (lastReadBookId) {
                 openBook(lastReadBookId);
+            }
+        });
+        
+        // Keyboard support for Continue Reading FAB
+        continueReadingFab.addEventListener('keydown', (e) => {
+            if (e.key === 'Enter' || e.key === ' ') {
+                e.preventDefault();
+                if (lastReadBookId) {
+                    openBook(lastReadBookId);
+                }
             }
         });
 
