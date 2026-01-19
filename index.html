@@ -142,7 +142,6 @@
         .book-cover canvas {
             width: 100%;
             height: 100%;
-            object-fit: cover;
         }
 
         .book-info {
@@ -567,26 +566,30 @@
                 
                 const loadingTask = pdfjsLib.getDocument({ data: bookData });
                 const pdf = await loadingTask.promise;
-                const page = await pdf.getPage(1);
                 
-                const canvas = document.createElement('canvas');
-                const context = canvas.getContext('2d');
-                
-                // Small scale for thumbnail
-                const viewport = page.getViewport({ scale: 0.5 });
-                canvas.width = viewport.width;
-                canvas.height = viewport.height;
-                
-                await page.render({
-                    canvasContext: context,
-                    viewport: viewport
-                }).promise;
-                
-                const dataUrl = canvas.toDataURL('image/jpeg', 0.7);
-                await saveThumbnail(bookId, dataUrl);
-                
-                pdf.destroy();
-                return dataUrl;
+                try {
+                    const page = await pdf.getPage(1);
+                    
+                    const canvas = document.createElement('canvas');
+                    const context = canvas.getContext('2d');
+                    
+                    // Small scale for thumbnail
+                    const viewport = page.getViewport({ scale: 0.5 });
+                    canvas.width = viewport.width;
+                    canvas.height = viewport.height;
+                    
+                    await page.render({
+                        canvasContext: context,
+                        viewport: viewport
+                    }).promise;
+                    
+                    const dataUrl = canvas.toDataURL('image/jpeg', 0.7);
+                    await saveThumbnail(bookId, dataUrl);
+                    
+                    return dataUrl;
+                } finally {
+                    pdf.destroy();
+                }
             } catch (error) {
                 console.error('Error generating thumbnail:', error);
                 return null;
@@ -603,6 +606,9 @@
         let scrollTimeout = null;
         let controlsVisible = true;
         let hideControlsTimeout = null;
+        let readerContentClickListenerAdded = false;
+        let readerHeaderClickListenerAdded = false;
+        let readerControlsClickListenerAdded = false;
 
         // Throttle function to limit scroll event firing
         function throttle(func, delay) {
@@ -1026,21 +1032,30 @@
         document.getElementById('prevPage').addEventListener('click', () => goToPage(currentPage - 1));
         document.getElementById('nextPage').addEventListener('click', () => goToPage(currentPage + 1));
 
-        // Add click/tap listener to reader content to toggle controls
-        document.getElementById('readerContent').addEventListener('click', (e) => {
-            toggleControls();
-        });
+        // Add click/tap listener to reader content to toggle controls (only once)
+        if (!readerContentClickListenerAdded) {
+            document.getElementById('readerContent').addEventListener('click', (e) => {
+                toggleControls();
+            });
+            readerContentClickListenerAdded = true;
+        }
 
-        // When user interacts with controls, restart the hide timer
-        document.querySelector('.reader-header')?.addEventListener('click', (e) => {
-            e.stopPropagation();
-            startHideControlsTimer();
-        });
+        // When user interacts with controls, restart the hide timer (only once)
+        if (!readerHeaderClickListenerAdded) {
+            document.querySelector('.reader-header')?.addEventListener('click', (e) => {
+                e.stopPropagation();
+                startHideControlsTimer();
+            });
+            readerHeaderClickListenerAdded = true;
+        }
 
-        document.querySelector('.reader-controls')?.addEventListener('click', (e) => {
-            e.stopPropagation();
-            startHideControlsTimer();
-        });
+        if (!readerControlsClickListenerAdded) {
+            document.querySelector('.reader-controls')?.addEventListener('click', (e) => {
+                e.stopPropagation();
+                startHideControlsTimer();
+            });
+            readerControlsClickListenerAdded = true;
+        }
 
         // Service Worker
         if ('serviceWorker' in navigator) {
