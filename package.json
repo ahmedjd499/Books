@@ -4,7 +4,7 @@
   "description": "A Progressive Web App for reading and managing PDF books on Android devices with offline support.",
   "main": "index.html",
   "scripts": {
-    "build": "mkdir -p build/pdfjs && cp node_modules/pdfjs-dist/build/pdf.min.js build/pdfjs/ && cp node_modules/pdfjs-dist/build/pdf.worker.min.js build/pdfjs/",
+    "build": "node build.js",
     "serve": "npx http-server -p 8080",
     "start": "npm run build && npm run serve"
   },
@@ -12,6 +12,6 @@
   "author": "",
   "license": "ISC",
   "dependencies": {
-    "pdfjs-dist": "^3.11.174"
+    "pdfjs-dist": "3.11.174"
   }
 }
