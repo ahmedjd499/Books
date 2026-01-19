@@ -1301,7 +1301,7 @@
                 try {
                     currentPdfDoc.destroy();
                 } catch (error) {
-                    console.error('Error destroying PDF document:', error);
+                    console.error('Error destroying PDF document during reader cleanup. This may indicate a memory leak:', error);
                 }
                 currentPdfDoc = null;
             }
