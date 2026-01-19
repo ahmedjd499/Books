@@ -1046,7 +1046,7 @@
         
         // Apply page spacing configuration
         function applyPageSpacing() {
-            const spacing = readerConfig.pageSpacing || 0;
+            const spacing = readerConfig.pageSpacing;
             const pages = document.querySelectorAll('.pdf-page');
             pages.forEach(page => {
                 page.style.marginBottom = `${spacing}px`;
@@ -1352,7 +1352,8 @@
             const containerWidth = readerContent.clientWidth;
             
             // Create placeholder canvases for all pages
-            // Note: We get the first page to estimate dimensions, but handle variable sizes during actual render
+            // Note: We load the first page to estimate dimensions for placeholders
+            // For PDFs with 1000+ pages, this is still much faster than loading all pages
             const samplePage = await currentPdfDoc.getPage(1);
             const viewport = samplePage.getViewport({ scale: 1 });
             const scale = Math.min(
@@ -1470,6 +1471,8 @@
             }
             
             // Load pages concurrently for better performance
+            // Note: We load a limited number of pages (current + 3 ahead + 2 behind = max 6)
+            // so concurrent loading won't overwhelm the browser
             await Promise.allSettled(pagesToLoad.map(pageNum => renderPage(pageNum)));
         }
 
