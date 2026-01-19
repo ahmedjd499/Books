@@ -196,11 +196,20 @@
 
         .reader-content {
             flex: 1;
-            overflow: auto;
+            overflow-y: auto;
+            overflow-x: hidden;
             display: flex;
+            flex-direction: column;
             align-items: center;
-            justify-content: center;
             position: relative;
+            padding: 20px 0;
+        }
+
+        .pdf-page {
+            max-width: 100%;
+            display: block;
+            margin-bottom: 20px;
+            box-shadow: 0 2px 8px rgba(0,0,0,0.5);
         }
 
         #pdfCanvas {
@@ -299,8 +308,8 @@
             <button class="btn btn-secondary" id="closeReader">←</button>
             <div class="reader-title" id="readerTitle"></div>
         </div>
-        <div class="reader-content">
-            <canvas id="pdfCanvas"></canvas>
+        <div class="reader-content" id="readerContent">
+            <!-- PDF pages will be rendered here as canvases -->
         </div>
         <div class="reader-controls">
             <button class="btn btn-secondary" id="prevPage">Previous</button>
@@ -426,6 +435,7 @@
         let currentPdfDoc = null;
         let currentPage = 1;
         let totalPages = 0;
+        let pageCanvases = [];
 
         async function displayBooks() {
             const bookList = document.getElementById('bookList');
@@ -531,13 +541,98 @@
                 totalPages = currentPdfDoc.numPages;
                 currentPage = progress.currentPage || 1;
                 
-                await renderPage(currentPage);
+                await renderAllPages();
                 updatePageInfo();
+                scrollToPage(currentPage);
                 await saveProgress(bookId, currentPage, totalPages);
             } catch (error) {
                 console.error('Error opening PDF:', error);
                 alert('Failed to open PDF. The file may be corrupted.');
                 closeReader();
+            }
+        }
+
+        async function renderAllPages() {
+            const readerContent = document.getElementById('readerContent');
+            readerContent.innerHTML = '';
+            pageCanvases = [];
+            
+            const containerWidth = readerContent.clientWidth;
+            
+            for (let pageNum = 1; pageNum <= totalPages; pageNum++) {
+                const page = await currentPdfDoc.getPage(pageNum);
+                const canvas = document.createElement('canvas');
+                canvas.className = 'pdf-page';
+                canvas.dataset.pageNumber = pageNum;
+                const context = canvas.getContext('2d');
+                
+                const viewport = page.getViewport({ scale: 1 });
+                const scale = Math.min(
+                    containerWidth / viewport.width,
+                    1.5 // Max scale to keep quality good
+                );
+                const scaledViewport = page.getViewport({ scale });
+                
+                canvas.width = scaledViewport.width;
+                canvas.height = scaledViewport.height;
+                
+                await page.render({
+                    canvasContext: context,
+                    viewport: scaledViewport
+                }).promise;
+                
+                readerContent.appendChild(canvas);
+                pageCanvases.push(canvas);
+            }
+            
+            // Set up scroll listener to track current page
+            setupScrollTracking();
+        }
+
+        function setupScrollTracking() {
+            const readerContent = document.getElementById('readerContent');
+            
+            readerContent.addEventListener('scroll', () => {
+                updateCurrentPageFromScroll();
+            });
+        }
+
+        function updateCurrentPageFromScroll() {
+            const readerContent = document.getElementById('readerContent');
+            const scrollTop = readerContent.scrollTop;
+            const viewportHeight = readerContent.clientHeight;
+            const viewportCenter = scrollTop + viewportHeight / 2;
+            
+            // Find which page is currently in view
+            for (let i = 0; i < pageCanvases.length; i++) {
+                const canvas = pageCanvases[i];
+                const canvasTop = canvas.offsetTop;
+                const canvasBottom = canvasTop + canvas.height;
+                
+                if (viewportCenter >= canvasTop && viewportCenter < canvasBottom) {
+                    const newPage = i + 1;
+                    if (newPage !== currentPage) {
+                        currentPage = newPage;
+                        updatePageInfo();
+                        
+                        // Save progress
+                        if (currentBook) {
+                            saveProgress(currentBook.id, currentPage, totalPages);
+                        }
+                    }
+                    break;
+                }
+            }
+        }
+
+        function scrollToPage(pageNum) {
+            if (pageNum < 1 || pageNum > totalPages) return;
+            
+            const canvas = pageCanvases[pageNum - 1];
+            if (canvas) {
+                const readerContent = document.getElementById('readerContent');
+                const scrollTop = canvas.offsetTop - 20; // 20px padding
+                readerContent.scrollTo({ top: scrollTop, behavior: 'smooth' });
             }
         }
 
@@ -573,18 +668,17 @@
         async function goToPage(pageNum) {
             if (pageNum < 1 || pageNum > totalPages) return;
             
-            currentPage = pageNum;
-            await renderPage(currentPage);
-            updatePageInfo();
-            
-            if (currentBook) {
-                await saveProgress(currentBook.id, currentPage, totalPages);
-            }
+            scrollToPage(pageNum);
         }
 
         function closeReader() {
             document.getElementById('readerView').classList.remove('active');
             document.getElementById('homeView').style.display = 'block';
+            
+            // Clear rendered pages
+            const readerContent = document.getElementById('readerContent');
+            readerContent.innerHTML = '';
+            pageCanvases = [];
             
             if (currentPdfDoc) {
                 currentPdfDoc.destroy();
