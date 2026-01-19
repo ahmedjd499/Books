@@ -309,14 +309,11 @@
         </div>
     </div>
 
-    <script src="https://cdnjs.cloudflare.com/ajax/libs/pdf.js/3.11.174/pdf.min.js" 
-            integrity="sha512-bcRQdZu/3y5FM/W/5UvRlfwD3s1SmxrZWL0bobadkGL+ygsNqV0td7xZEeGAvkjWACYnzP11mNtM+iGkzlf1TQ==" 
-            crossorigin="anonymous" 
-            referrerpolicy="no-referrer"></script>
+    <script src="build/pdfjs/pdf.min.js"></script>
     <script>
         // Initialize PDF.js with error handling
         if (typeof pdfjsLib !== 'undefined') {
-            pdfjsLib.GlobalWorkerOptions.workerSrc = 'https://cdnjs.cloudflare.com/ajax/libs/pdf.js/3.11.174/pdf.worker.min.js';
+            pdfjsLib.GlobalWorkerOptions.workerSrc = 'build/pdfjs/pdf.worker.min.js';
         } else {
             console.warn('PDF.js not loaded - may be blocked by ad blocker or network');
         }

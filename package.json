@@ -1,0 +1,17 @@
+{
+  "name": "books",
+  "version": "1.0.0",
+  "description": "A Progressive Web App for reading and managing PDF books on Android devices with offline support.",
+  "main": "index.html",
+  "scripts": {
+    "build": "mkdir -p build/pdfjs && cp node_modules/pdfjs-dist/build/pdf.min.js build/pdfjs/ && cp node_modules/pdfjs-dist/build/pdf.worker.min.js build/pdfjs/",
+    "serve": "npx http-server -p 8080",
+    "start": "npm run build && npm run serve"
+  },
+  "keywords": ["pwa", "pdf", "reader", "offline", "books"],
+  "author": "",
+  "license": "ISC",
+  "dependencies": {
+    "pdfjs-dist": "^3.11.174"
+  }
+}
