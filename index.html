@@ -309,7 +309,10 @@
         </div>
     </div>
 
-    <script src="https://cdnjs.cloudflare.com/ajax/libs/pdf.js/3.11.174/pdf.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/pdf.js/3.11.174/pdf.min.js" 
+            integrity="sha512-bcRQdZu/3y5FM/W/5UvRlfwD3s1SmxrZWL0bobadkGL+ygsNqV0td7xZEeGAvkjWACYnzP11mNtM+iGkzlf1TQ==" 
+            crossorigin="anonymous" 
+            referrerpolicy="no-referrer"></script>
     <script>
         // Initialize PDF.js with error handling
         if (typeof pdfjsLib !== 'undefined') {
@@ -446,31 +449,47 @@
                 
                 const bookItem = document.createElement('div');
                 bookItem.className = 'book-item';
-                bookItem.innerHTML = `
-                    <div class="book-title">${escapeHtml(book.name)}</div>
-                    <div class="book-progress">
-                        ${progress.totalPages ? 
-                            `Page ${progress.currentPage} of ${progress.totalPages}` : 
-                            'Not started'}
-                    </div>
-                    <div class="progress-bar">
-                        <div class="progress-fill" style="width: ${percentage}%"></div>
-                    </div>
-                    <div class="book-actions">
-                        <button class="btn" onclick="openBook(${book.id})">
-                            ${progress.currentPage > 1 ? 'Continue Reading' : 'Start Reading'}
-                        </button>
-                        <button class="btn btn-danger" onclick="confirmDelete(${book.id}, '${escapeHtml(book.name).replace(/'/g, "\\'")}')">Delete</button>
-                    </div>
-                `;
+                
+                const bookTitle = document.createElement('div');
+                bookTitle.className = 'book-title';
+                bookTitle.textContent = book.name;
+                
+                const bookProgress = document.createElement('div');
+                bookProgress.className = 'book-progress';
+                bookProgress.textContent = progress.totalPages ? 
+                    `Page ${progress.currentPage} of ${progress.totalPages}` : 
+                    'Not started';
+                
+                const progressBar = document.createElement('div');
+                progressBar.className = 'progress-bar';
+                const progressFill = document.createElement('div');
+                progressFill.className = 'progress-fill';
+                progressFill.style.width = `${percentage}%`;
+                progressBar.appendChild(progressFill);
+                
+                const bookActions = document.createElement('div');
+                bookActions.className = 'book-actions';
+                
+                const readBtn = document.createElement('button');
+                readBtn.className = 'btn';
+                readBtn.textContent = progress.currentPage > 1 ? 'Continue Reading' : 'Start Reading';
+                readBtn.addEventListener('click', () => openBook(book.id));
+                
+                const deleteBtn = document.createElement('button');
+                deleteBtn.className = 'btn btn-danger';
+                deleteBtn.textContent = 'Delete';
+                deleteBtn.addEventListener('click', () => confirmDelete(book.id, book.name));
+                
+                bookActions.appendChild(readBtn);
+                bookActions.appendChild(deleteBtn);
+                
+                bookItem.appendChild(bookTitle);
+                bookItem.appendChild(bookProgress);
+                bookItem.appendChild(progressBar);
+                bookItem.appendChild(bookActions);
+                
                 bookList.appendChild(bookItem);
             }
-        }
-
-        function escapeHtml(text) {
-            const div = document.createElement('div');
-            div.textContent = text;
-            return div.innerHTML;
         }
 
         async function handleFileUpload(files) {
@@ -624,7 +643,8 @@
                 // Create service worker inline
                 const swCode = `
                     const CACHE_NAME = 'book-reader-v1';
-                    const urlsToCache = ['/'];
+                    const APP_PATH = location.pathname.substring(0, location.pathname.lastIndexOf('/') + 1);
+                    const urlsToCache = [APP_PATH];
 
                     self.addEventListener('install', (event) => {
                         event.waitUntil(
@@ -651,7 +671,7 @@
                                         });
                                         return response;
                                     }).catch(() => {
-                                        return caches.match('/');
+                                        return caches.match(APP_PATH + 'index.html');
                                     });
                                 })
                         );
@@ -705,12 +725,17 @@
         });
 
         // Manifest
+        const getBasePath = () => {
+            const path = window.location.pathname;
+            return path.substring(0, path.lastIndexOf('/') + 1) || './';
+        };
+
         const manifest = {
             name: 'Book Reader',
             short_name: 'Books',
             description: 'Offline PDF Book Reader',
-            start_url: '/index.html',
-            scope: '/',
+            start_url: './',
+            scope: './',
             display: 'standalone',
             background_color: '#1a1a1a',
             theme_color: '#1a1a1a',
