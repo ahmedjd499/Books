@@ -212,12 +212,6 @@
             box-shadow: 0 2px 8px rgba(0,0,0,0.5);
         }
 
-        #pdfCanvas {
-            max-width: 100%;
-            max-height: 100%;
-            display: block;
-        }
-
         .reader-controls {
             background: #252525;
             padding: 12px 16px;
@@ -437,6 +431,18 @@
         let totalPages = 0;
         let pageCanvases = [];
         let scrollListenerAdded = false;
+        let scrollTimeout = null;
+
+        // Throttle function to limit scroll event firing
+        function throttle(func, delay) {
+            return function(...args) {
+                if (scrollTimeout) return;
+                scrollTimeout = setTimeout(() => {
+                    func.apply(this, args);
+                    scrollTimeout = null;
+                }, delay);
+            };
+        }
 
         async function displayBooks() {
             const bookList = document.getElementById('bookList');
@@ -560,6 +566,8 @@
             
             const containerWidth = readerContent.clientWidth;
             
+            // Note: For very large PDFs (100+ pages), consider implementing 
+            // progressive loading where pages are rendered as they scroll into view
             for (let pageNum = 1; pageNum <= totalPages; pageNum++) {
                 const page = await currentPdfDoc.getPage(pageNum);
                 const canvas = document.createElement('canvas');
@@ -595,9 +603,9 @@
             
             const readerContent = document.getElementById('readerContent');
             
-            readerContent.addEventListener('scroll', () => {
-                updateCurrentPageFromScroll();
-            });
+            // Throttle scroll events to improve performance
+            const throttledScrollHandler = throttle(updateCurrentPageFromScroll, 150);
+            readerContent.addEventListener('scroll', throttledScrollHandler);
             
             scrollListenerAdded = true;
         }
@@ -641,27 +649,6 @@
             }
         }
 
-        async function renderPage(pageNum) {
-            const page = await currentPdfDoc.getPage(pageNum);
-            const canvas = document.getElementById('pdfCanvas');
-            const context = canvas.getContext('2d');
-            
-            const viewport = page.getViewport({ scale: 1 });
-            const scale = Math.min(
-                window.innerWidth / viewport.width,
-                (window.innerHeight - 120) / viewport.height
-            );
-            const scaledViewport = page.getViewport({ scale });
-            
-            canvas.width = scaledViewport.width;
-            canvas.height = scaledViewport.height;
-            
-            await page.render({
-                canvasContext: context,
-                viewport: scaledViewport
-            }).promise;
-        }
-
         function updatePageInfo() {
             document.getElementById('pageInfo').textContent = 
                 `Page ${currentPage} of ${totalPages}`;
@@ -685,6 +672,12 @@
             readerContent.innerHTML = '';
             pageCanvases = [];
             scrollListenerAdded = false;
+            
+            // Clear any pending scroll timeout
+            if (scrollTimeout) {
+                clearTimeout(scrollTimeout);
+                scrollTimeout = null;
+            }
             
             if (currentPdfDoc) {
                 currentPdfDoc.destroy();
