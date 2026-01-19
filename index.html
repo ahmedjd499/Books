@@ -1102,9 +1102,10 @@
                 await renderAllPages();
                 updatePageInfo();
                 
-                // Scroll to saved page after rendering
+                // Allow browser to complete layout and rendering before scrolling
+                // This ensures all page canvases are properly positioned in the DOM
                 const RENDERING_DELAY_MS = 100;
-                await new Promise(resolve => setTimeout(resolve, RENDERING_DELAY_MS)); // Small delay to ensure rendering is complete
+                await new Promise(resolve => setTimeout(resolve, RENDERING_DELAY_MS));
                 scrollToPage(currentPage);
                 
                 await saveProgress(bookId, currentPage, totalPages);
@@ -1411,11 +1412,21 @@
 
         // Sort buttons
         document.querySelectorAll('.sort-btn').forEach(btn => {
-            btn.addEventListener('click', (e) => {
+            const handleSort = (e) => {
                 document.querySelectorAll('.sort-btn').forEach(b => b.classList.remove('active'));
                 e.target.classList.add('active');
                 currentSort = e.target.dataset.sort;
                 displayBooks();
+            };
+            
+            btn.addEventListener('click', handleSort);
+            
+            // Keyboard support for sort buttons
+            btn.addEventListener('keydown', (e) => {
+                if (e.key === 'Enter' || e.key === ' ') {
+                    e.preventDefault();
+                    handleSort(e);
+                }
             });
         });
 
