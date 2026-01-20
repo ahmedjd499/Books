@@ -1068,6 +1068,7 @@
         const PAGES_TO_LOAD_AHEAD = 3; // Load 3 pages ahead of current position
         const PAGES_TO_LOAD_BEHIND = 2; // Keep 2 pages behind loaded
         let loadedPages = new Set(); // Track which pages are loaded
+        let renderingPages = new Set(); // Track which pages are currently being rendered
 
         // Throttle function to limit scroll event firing
         function throttle(func, delay) {
@@ -1358,20 +1359,13 @@
             readerContent.innerHTML = '';
             pageCanvases = [];
             loadedPages.clear();
+            renderingPages.clear();
             
             const containerWidth = readerContent.clientWidth;
             
             // Create placeholder canvases for all pages
-            // Note: We load the first page to estimate dimensions for placeholders
-            // For PDFs with 1000+ pages, this is still much faster than loading all pages
-            const samplePage = await currentPdfDoc.getPage(1);
-            const viewport = samplePage.getViewport({ scale: 1, rotation: samplePage.rotate });
-            // Calculate display scale to fit container width
-            const displayScale = containerWidth / viewport.width;
-            // Use device pixel ratio for high-DPI displays, but cap at 2x to prevent crashes
-            const pixelRatio = Math.min(window.devicePixelRatio || 1, 2);
-            const renderScale = displayScale * pixelRatio;
-            const renderViewport = samplePage.getViewport({ scale: renderScale, rotation: samplePage.rotate });
+            // Note: We create minimal placeholders and size them properly when each page loads
+            // This avoids issues with pages having different rotations or dimensions
             
             for (let pageNum = 1; pageNum <= totalPages; pageNum++) {
                 const canvas = document.createElement('canvas');
@@ -1379,13 +1373,16 @@
                 canvas.dataset.pageNumber = pageNum;
                 canvas.dataset.loaded = 'false';
                 
-                // Set canvas size to match what will be used during actual rendering
-                // Internal size uses high-resolution for crisp rendering
-                canvas.width = renderViewport.width;
-                canvas.height = renderViewport.height;
-                // Display size fits the container
-                canvas.style.width = (renderViewport.width / pixelRatio) + 'px';
-                canvas.style.height = (renderViewport.height / pixelRatio) + 'px';
+                // Set a reasonable default size for placeholder
+                // This will be updated when the actual page is rendered
+                const pixelRatio = Math.min(window.devicePixelRatio || 1, 2);
+                const defaultWidth = containerWidth * pixelRatio;
+                const defaultHeight = containerWidth * 1.414 * pixelRatio; // ~A4 ratio
+                
+                canvas.width = defaultWidth;
+                canvas.height = defaultHeight;
+                canvas.style.width = containerWidth + 'px';
+                canvas.style.height = (containerWidth * 1.414) + 'px';
                 
                 // Add a placeholder with page number
                 const context = canvas.getContext('2d');
@@ -1416,9 +1413,13 @@
         async function renderPage(pageNum) {
             if (pageNum < 1 || pageNum > totalPages) return;
             if (loadedPages.has(pageNum)) return;
+            if (renderingPages.has(pageNum)) return; // Prevent concurrent renders of same page
             
             const canvas = pageCanvases[pageNum - 1];
             if (!canvas || canvas.dataset.loaded === 'true') return;
+            
+            // Mark as rendering to prevent duplicate render attempts
+            renderingPages.add(pageNum);
             
             try {
                 const page = await currentPdfDoc.getPage(pageNum);
@@ -1463,6 +1464,9 @@
                 context.fillStyle = '#f44336';
                 context.font = '14px sans-serif';
                 context.fillText('(Failed to load)', canvas.width / 2, canvas.height / 2 + 30);
+            } finally {
+                // Always remove from rendering set when done
+                renderingPages.delete(pageNum);
             }
         }
 
@@ -1622,6 +1626,8 @@
             readerContent.innerHTML = '';
             pageCanvases = [];
             scrollListenerAdded = false;
+            loadedPages.clear();
+            renderingPages.clear();
             
             // Clear any pending scroll timeout
             if (scrollTimeout) {
