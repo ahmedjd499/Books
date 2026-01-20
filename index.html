@@ -1368,8 +1368,8 @@
             const viewport = samplePage.getViewport({ scale: 1 });
             // Calculate display scale to fit container width
             const displayScale = containerWidth / viewport.width;
-            // Use device pixel ratio for high-DPI displays
-            const pixelRatio = window.devicePixelRatio || 1;
+            // Use device pixel ratio for high-DPI displays, but cap at 2x to prevent crashes
+            const pixelRatio = Math.min(window.devicePixelRatio || 1, 2);
             const renderScale = displayScale * pixelRatio;
             const renderViewport = samplePage.getViewport({ scale: renderScale });
             
@@ -1430,7 +1430,8 @@
                 // Calculate display scale to fit container width
                 const displayScale = containerWidth / viewport.width;
                 // Use device pixel ratio to render at native resolution for crisp text
-                const pixelRatio = window.devicePixelRatio || 1;
+                // Cap at 2x to prevent canvas size from exceeding browser limits on high-DPI displays
+                const pixelRatio = Math.min(window.devicePixelRatio || 1, 2);
                 const renderScale = displayScale * pixelRatio;
                 const renderViewport = page.getViewport({ scale: renderScale });
                 
