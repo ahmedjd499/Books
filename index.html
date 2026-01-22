@@ -1064,11 +1064,12 @@
         }
         
         // Progressive loading configuration
-        const INITIAL_PAGES_TO_LOAD = 5; // Load first 5 pages immediately
-        const PAGES_TO_LOAD_AHEAD = 3; // Load 3 pages ahead of current position
-        const PAGES_TO_LOAD_BEHIND = 2; // Keep 2 pages behind loaded
+        const INITIAL_PAGES_TO_LOAD = 10; // Load first 10 pages immediately for smoother experience
+        const PAGES_TO_LOAD_AHEAD = 5; // Load 5 pages ahead of current position
+        const PAGES_TO_LOAD_BEHIND = 3; // Keep 3 pages behind loaded
         let loadedPages = new Set(); // Track which pages are loaded
         let renderingPages = new Set(); // Track which pages are currently being rendered
+        let intersectionObserver = null; // Intersection observer for lazy loading
 
         // Throttle function to limit scroll event firing
         function throttle(func, delay) {
@@ -1425,24 +1426,34 @@
                 const page = await currentPdfDoc.getPage(pageNum);
                 const context = canvas.getContext('2d');
                 
-                // Calculate viewport for this specific page to handle variable page sizes and rotation
-                const viewport = page.getViewport({ scale: 1, rotation: page.rotate });
+                // Clear any previous content to prevent artifacts
+                context.clearRect(0, 0, canvas.width, canvas.height);
+                
+                // Get the default viewport without any rotation override
+                // PDF.js handles rotation internally based on the page's rotation metadata
+                const viewport = page.getViewport({ scale: 1 });
                 const containerWidth = document.getElementById('readerContent').clientWidth;
+                
                 // Calculate display scale to fit container width
                 const displayScale = containerWidth / viewport.width;
+                
                 // Use device pixel ratio to render at native resolution for crisp text
                 // Cap at 2x to prevent canvas size from exceeding browser limits on high-DPI displays
                 const pixelRatio = Math.min(window.devicePixelRatio || 1, 2);
                 const renderScale = displayScale * pixelRatio;
-                const renderViewport = page.getViewport({ scale: renderScale, rotation: page.rotate });
+                
+                // Get final viewport with proper scaling (no rotation override)
+                const renderViewport = page.getViewport({ scale: renderScale });
                 
                 // Set canvas internal size to high-resolution
                 canvas.width = renderViewport.width;
                 canvas.height = renderViewport.height;
+                
                 // Set canvas display size to fit container
                 canvas.style.width = (renderViewport.width / pixelRatio) + 'px';
                 canvas.style.height = (renderViewport.height / pixelRatio) + 'px';
                 
+                // Render the page with proper viewport
                 await page.render({
                     canvasContext: context,
                     viewport: renderViewport
@@ -1510,7 +1521,55 @@
             const throttledScrollHandler = throttle(updateCurrentPageFromScroll, 150);
             readerContent.addEventListener('scroll', throttledScrollHandler);
             
+            // Set up Intersection Observer for better lazy loading
+            setupIntersectionObserver();
+            
             scrollListenerAdded = true;
+        }
+
+        function setupIntersectionObserver() {
+            // Disconnect previous observer if it exists
+            if (intersectionObserver) {
+                intersectionObserver.disconnect();
+            }
+
+            // Create intersection observer with a larger root margin for preloading
+            intersectionObserver = new IntersectionObserver((entries) => {
+                entries.forEach(entry => {
+                    if (entry.isIntersecting) {
+                        const canvas = entry.target;
+                        const pageNum = parseInt(canvas.dataset.pageNumber);
+                        
+                        // Load this page and nearby pages
+                        if (!loadedPages.has(pageNum)) {
+                            renderPage(pageNum);
+                        }
+                        
+                        // Preload nearby pages
+                        for (let i = 1; i <= 2; i++) {
+                            const nextPage = pageNum + i;
+                            const prevPage = pageNum - i;
+                            
+                            if (nextPage <= totalPages && !loadedPages.has(nextPage)) {
+                                renderPage(nextPage);
+                            }
+                            if (prevPage >= 1 && !loadedPages.has(prevPage)) {
+                                renderPage(prevPage);
+                            }
+                        }
+                    }
+                });
+            }, {
+                root: document.getElementById('readerContent'),
+                // Preload pages that are 50% of viewport height away from being visible
+                rootMargin: '50% 0px 50% 0px',
+                threshold: 0
+            });
+
+            // Observe all page canvases
+            pageCanvases.forEach(canvas => {
+                intersectionObserver.observe(canvas);
+            });
         }
 
         function showControls() {
@@ -1620,6 +1679,12 @@
         function closeReader() {
             document.getElementById('readerView').classList.remove('active');
             document.getElementById('homeView').style.display = 'block';
+            
+            // Disconnect intersection observer
+            if (intersectionObserver) {
+                intersectionObserver.disconnect();
+                intersectionObserver = null;
+            }
             
             // Clear rendered pages
             const readerContent = document.getElementById('readerContent');
