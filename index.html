@@ -1067,6 +1067,8 @@
         const INITIAL_PAGES_TO_LOAD = 10; // Load first 10 pages immediately for smoother experience
         const PAGES_TO_LOAD_AHEAD = 5; // Load 5 pages ahead of current position
         const PAGES_TO_LOAD_BEHIND = 3; // Keep 3 pages behind loaded
+        const INTERSECTION_PRELOAD_RANGE = 2; // Number of pages to preload on each side when page becomes visible
+        const INTERSECTION_ROOT_MARGIN = '50%'; // Viewport margin for preloading (50% means load when page is 50% away from viewport)
         let loadedPages = new Set(); // Track which pages are loaded
         let renderingPages = new Set(); // Track which pages are currently being rendered
         let intersectionObserver = null; // Intersection observer for lazy loading
@@ -1545,8 +1547,8 @@
                             renderPage(pageNum);
                         }
                         
-                        // Preload nearby pages
-                        for (let i = 1; i <= 2; i++) {
+                        // Preload nearby pages using configured range
+                        for (let i = 1; i <= INTERSECTION_PRELOAD_RANGE; i++) {
                             const nextPage = pageNum + i;
                             const prevPage = pageNum - i;
                             
@@ -1561,8 +1563,8 @@
                 });
             }, {
                 root: document.getElementById('readerContent'),
-                // Preload pages that are 50% of viewport height away from being visible
-                rootMargin: '50% 0px 50% 0px',
+                // Preload pages that are within configured margin from being visible
+                rootMargin: `${INTERSECTION_ROOT_MARGIN} 0px ${INTERSECTION_ROOT_MARGIN} 0px`,
                 threshold: 0
             });
 
